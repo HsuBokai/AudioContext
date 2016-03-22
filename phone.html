@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Audio Phone</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+.inNumber{
+}
+.canvas{
+}
+</style>
+</head>
+
+<body>
+
+<textarea class="inNumber"></textarea>
+<canvas class="canvas"></canvas>
+<script type="text/javascript">
+
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+var gainNode = audioCtx.createGain();
+gainNode.gain.value = 0.5;
+
+var oscillator1 = audioCtx.createOscillator();
+oscillator1.type = 'sine'; // sine wave ¡X other values are 'square', 'sawtooth', 'triangle' and 'custom'
+oscillator1.connect(gainNode);
+oscillator1.start();
+
+var oscillator2 = audioCtx.createOscillator();
+oscillator2.type = 'sine';
+oscillator2.connect(gainNode);
+oscillator2.start();
+
+function mute(){
+	gainNode.disconnect(audioCtx.destination);
+}
+
+function play(f1, f2){
+	console.log(f1);
+	console.log(f2);
+	oscillator1.frequency.value = f1; // value in hertz
+	oscillator2.frequency.value = f2;
+	gainNode.connect(audioCtx.destination);
+	setTimeout(mute, 150);
+}
+
+var rowHz = [697, 770, 852, 941];
+var colHz = [1209, 1336, 1477];
+function beep(num){
+	if(num == 0) {
+		play(rowHz[3], colHz[1]);
+		return;
+	}
+	var col = num % 3;
+	if(col == 0) col = 3;
+	var row = (num - col)/3;
+	play(rowHz[row], colHz[col-1]);
+}
+
+
+var phoneNumberLen = 0;
+var inNumber = document.querySelector('.inNumber');
+inNumber.oninput = parse;
+function parse(){
+	var phoneNumber = inNumber.value;
+	var len = phoneNumber.length;
+	if(len <= phoneNumberLen) return;
+	++phoneNumberLen;
+	console.log(phoneNumber[len-1]);
+	switch(phoneNumber[len-1]){
+		case '0': beep(0); break;
+		case '1': beep(1); break;
+		case '2': beep(2); break;
+		case '3': beep(3); break;
+		case '4': beep(4); break;
+		case '5': beep(5); break;
+		case '6': beep(6); break;
+		case '7': beep(7); break;
+		case '8': beep(8); break;
+		case '9': beep(9); break;
+	}
+}
+
+var canvas = document.querySelector('.canvas');
+canvas.addEventListener("mousedown", doMouseDown, false);
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
+
+var canvasCtx = canvas.getContext('2d');
+canvasCtx.font="30px Arial";
+
+var radius = 30;
+var col0 = 30;
+var row0 = 50;
+var dis = 70;
+var colPos = [col0, col0 + dis, col0 + dis*2];
+var rowPos = [row0, row0 + dis, row0 + dis*2, row0 + dis*3];
+
+function drawCircle(x, y){
+	canvasCtx.beginPath();
+	canvasCtx.arc(x, y, radius, 0, Math.PI*2, false);
+	//canvasCtx.fillStyle = color;
+	canvasCtx.lineWidth = 2;
+	canvasCtx.strokeStyle = "black";
+	//canvasCtx.fill();
+	canvasCtx.stroke();
+}
+
+function drawKey(i, j, text){
+	drawCircle(colPos[i], rowPos[j]);
+	canvasCtx.fillText(text, colPos[i]-8, rowPos[j]+10);
+}
+
+drawKey(0,0, "1");
+drawKey(1,0, "2");
+drawKey(2,0, "3");
+drawKey(0,1, "4");
+drawKey(1,1, "5");
+drawKey(2,1, "6");
+drawKey(0,2, "7");
+drawKey(1,2, "8");
+drawKey(2,2, "9");
+drawKey(0,3, "*");
+drawKey(1,3, "0");
+drawKey(2,3, "#");
+
+var radius_2 = radius*radius;
+function doMouseDown(event){
+	var bounding = canvas.getBoundingClientRect();
+	var x = event.pageX - bounding.left;
+	var y = event.pageY - bounding.top;
+	for(var i=0; i<3; ++i){
+		for(var j=0; j<4; ++j){
+			var diffX = x-colPos[i];
+			var diffY = y-rowPos[j];
+			if( diffX*diffX + diffY*diffY < radius_2 ){
+				if(j==3){
+					if(i==1){
+						inNumber.value += "0";
+						beep(0);
+					}
+				}
+				else{
+					var num = j*3+i+1;
+					inNumber.value += parseInt(num, 10);
+					beep(num);
+				}
+			}
+		}
+	}
+}
+	
+
+</script>
+
+</body>
+</html>
